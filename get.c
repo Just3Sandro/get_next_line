@@ -2,7 +2,7 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
-#define BUFFER_SIZE 4
+#define BUFFER_SIZE 2
 
 char	*check_char(const char *str, int c)
 {
@@ -10,6 +10,7 @@ char	*check_char(const char *str, int c)
 		return (0);
 	while (*str != '\0')
 	{
+
 		if (*str == (char)c)
 			return ((char *)str);
 		str++;
@@ -17,7 +18,7 @@ char	*check_char(const char *str, int c)
 	return (0);
 }
 
-size_t	ft_strlenne(const char *str)
+size_t	ft_strlen(const char *str)
 {
 	size_t	size;
 
@@ -27,7 +28,7 @@ size_t	ft_strlenne(const char *str)
 	return (size);
 }
 
-char	*ft_strjoinn(char *total_buff, char *tmp) // ajouter a la suite de ttbuf, tmp
+char	*ft_strjoin(char *total_buff, char *tmp)
 {
 	char	*str;
 	size_t	i;
@@ -35,14 +36,14 @@ char	*ft_strjoinn(char *total_buff, char *tmp) // ajouter a la suite de ttbuf, t
 	size_t	tmp_size;
 
 	i = 0;
-	if (!total_buff)//la premiere fois il est vide
+	if (!total_buff)//premiere fois il arrive vide
 	{
 		total_buff = malloc(sizeof(char) * 1);
 		if (!total_buff)
 			return (NULL);
 	}
-	total_size = ft_strlenne(total_buff);
-	tmp_size = ft_strlenne(tmp);
+	total_size = ft_strlen(total_buff);
+	tmp_size = ft_strlen(tmp);
 	str = malloc(sizeof(char) *(total_size + tmp_size + 1));
 	if (!str)
 		return (NULL);
@@ -61,17 +62,18 @@ char	*fd_read(int fd, char *total_buff)
 	char	*tmp;
 	int		chk;
 
-	tmp = malloc(BUFFER_SIZE);
+	tmp = malloc(sizeof(char) * BUFFER_SIZE);
 	if (!tmp)
 		return (0);
 	chk = 1;
+	printf("buffersiwe: %i", BUFFER_SIZE);
 	while (chk > 0 && !check_char(tmp, '\n'))
 	{
-		chk = read(fd, tmp, BUFFER_SIZE); // donne val de fd->chk et tmp dune size de B_S
+		chk = read(fd, tmp, BUFFER_SIZE);
 		if (chk > 0) //si on ya tjrs des choses a lire
 		{
 			tmp [chk] = '\0';
-			total_buff = ft_strjoinn(total_buff, tmp);
+			total_buff = ft_strjoin(total_buff, tmp);
 		}
 	}
 	free(tmp);
@@ -82,8 +84,8 @@ char	*fd_read(int fd, char *total_buff)
 	}
 	return (total_buff);
 }
-
-char	*ft_substrr(const char *total_buff, unsigned int start, size_t len)
+//fais un malloc de la bonne size de la phrase
+char	*ft_substr(const char *total_buff, unsigned int start, size_t len)
 {
 	char	*str;
 	size_t	count;
@@ -91,7 +93,7 @@ char	*ft_substrr(const char *total_buff, unsigned int start, size_t len)
 
 	if (!total_buff)
 		return (NULL);
-	len_src = ft_strlenne(total_buff);
+	len_src = ft_strlen(total_buff);
 	if (len_src < start)
 		start = len_src;
 	if (len_src - start < len)
@@ -120,11 +122,12 @@ char	*take_line(char *total_buff)
 	while (total_buff[size] != '\n' && total_buff[size] != '\0')
 		size++;
 	if (total_buff[size] == '\n')
-		rtrn_buff = ft_substrr(total_buff, 0, size + 1);
+		rtrn_buff = ft_substr(total_buff, 0, size + 1);
 	else
-		rtrn_buff = ft_substrr(total_buff, 0, size);
+		rtrn_buff = ft_substr(total_buff, 0, size);
 	return (rtrn_buff);	
 }
+
 char	*cut_static(char *total_buff)
 {
 	size_t	indx;
@@ -136,9 +139,8 @@ char	*cut_static(char *total_buff)
 	if (total_buff[indx] == '\n' && total_buff[indx + 1] != '\0')
 	{
 		indx++;
-		new_total_buff = ft_substrr(total_buff, indx,
-				(ft_strlenne(total_buff) - indx));
-		//printf("pour toi ;on bouef: %s !!et!! %s!\n", new_total_buff, total_buff);
+		new_total_buff = ft_substr(total_buff, indx,
+				(ft_strlen(total_buff) - indx)); 
 	}
 	else
 		new_total_buff = NULL;
@@ -155,15 +157,15 @@ char	*get_next_line(int fd)
 
 	if (BUFFER_SIZE <= 0 || fd < 0)
 		return (0);
-	if(!total_buff)
-		total_buff = fd_read(fd, total_buff);//on remplie ttbuf de la premiere ligne
-	return_buff = take_line(total_buff);//on peut pqs utiliser ttbuf car static essayer de juste remplir ttbuf
+	if(!total_buff || (total_buff && !(check_char(total_buff, '\n')))) //checkchar utile si il y a plrs ligne (car ttbuf nn vide, il contient le debut de la prochaine phrase)
+		total_buff = fd_read(fd, total_buff);//on remplie ttbuf de la premiere ligne + debut de la new ligne
+	return_buff = take_line(total_buff);//on peut pqs utiliser ttbuf car static et enleve les premieres lettres de la ligne suivante
 	if (!return_buff)
 	{
 		free(total_buff);
 		return (0);
 	}
-	total_buff = cut_static(total_buff);
+	total_buff = cut_static(total_buff);//place le debut de la phrase suivante dans ttbuf
 	return (return_buff);
 }
 
@@ -172,7 +174,7 @@ int	main()
 	int	fd;
 	char	*line;
 
-	fd = open("Myfile.txt", O_RDONLY);      //ouvre le fichier 'Myfile'
+	fd = open("test.txt", O_RDONLY);      //ouvre le fichier 'Myfile'
 	while (1)
 	{
 		line = get_next_line(fd);
