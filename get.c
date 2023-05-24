@@ -4,6 +4,17 @@
 #include <stdio.h>
 #define BUFFER_SIZE 2
 
+char *my_malloc(sizeof(char) * (nbytes * size) + 1); //Il faut ptet le changer de place mais je ne pense pas 
+{
+	char *str;
+	
+	str = malloc(sizeof(char) * (nbytes * size) + 1);
+	if (!str)
+		return (0);
+	str[0] = '\0';
+	return (str);
+}
+
 char	*check_char(const char *str, int c)
 {
 	if (!str)
@@ -44,7 +55,7 @@ char	*ft_strjoin(char *total_buff, char *tmp)
 	}
 	total_size = ft_strlen(total_buff);
 	tmp_size = ft_strlen(tmp);
-	str = malloc(sizeof(char) *(total_size + tmp_size + 1));
+	str = my_malloc(total_size + tmp_size + 1, 1);
 	if (!str)
 		return (NULL);
 	while (i++ < total_size)
@@ -62,11 +73,11 @@ char	*fd_read(int fd, char *total_buff)
 	char	*tmp;
 	int		chk;
 
-	tmp = malloc(sizeof(char) * BUFFER_SIZE);
+	tmp = my_malloc(BUFFER_SIZE, 1);
 	if (!tmp)
 		return (0);
 	chk = 1;
-	printf("buffersiwe: %i", BUFFER_SIZE);
+	printf("buffersiwe: %i", BUFFER_SIZE);  ///// A SUPPRIMER
 	while (chk > 0 && !check_char(tmp, '\n'))
 	{
 		chk = read(fd, tmp, BUFFER_SIZE);
@@ -159,6 +170,8 @@ char	*get_next_line(int fd)
 		return (0);
 	if(!total_buff || (total_buff && !(check_char(total_buff, '\n')))) //checkchar utile si il y a plrs ligne (car ttbuf nn vide, il contient le debut de la prochaine phrase)
 		total_buff = fd_read(fd, total_buff);//on remplie ttbuf de la premiere ligne + debut de la new ligne
+	if (!total_buff)
+		return (0);
 	return_buff = take_line(total_buff);//on peut pqs utiliser ttbuf car static et enleve les premieres lettres de la ligne suivante
 	if (!return_buff)
 	{
